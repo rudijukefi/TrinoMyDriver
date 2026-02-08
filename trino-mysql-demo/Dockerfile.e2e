@@ -1,0 +1,23 @@
+# E2E test runner using Java-based verification
+FROM maven:3.9-eclipse-temurin-17
+
+WORKDIR /app
+
+# Copy the entire project context
+COPY pom.xml .
+COPY src ./src
+
+# Install the project and its custom driver into the local .m2 repo
+RUN mvn clean install -DskipTests -q
+
+# Environment variables with defaults
+ENV TRINO_E2E_HOST=trino
+ENV TRINO_E2E_PORT=8080
+
+# Run the Java E2E runner class
+# We pass the host/port as system properties
+CMD ["mvn", "exec:java", \
+     "-Dexec.mainClass=com.demo.e2e.TrinoE2ERunner", \
+     "-Dtrino.e2e.host=trino", \
+     "-Dtrino.e2e.port=8080", \
+     "-q"]

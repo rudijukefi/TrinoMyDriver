@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
@@ -21,3 +19,15 @@ services:
       - ./etc/catalog:/etc/trino/catalog # Mounts the mysql connector config
     depends_on:
       - mysql
+
+  # Runs e2e tests using the MyTrino driver JAR; builds from repo root and connects to trino.
+  e2e:
+    build:
+      context: ..
+      dockerfile: trino-mysql-demo/Dockerfile.e2e
+    container_name: trino-my-driver-e2e
+    environment:
+      TRINO_E2E_HOST: trino
+      TRINO_E2E_PORT: "8080"
+    depends_on:
+      - trino

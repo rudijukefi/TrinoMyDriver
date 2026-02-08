@@ -55,4 +55,46 @@ class SqlParserLogicTest {
         assertTrue(result.contains("SELECT"));
         assertTrue(result.contains("customers"));
     }
+
+    @Test
+    void parse_tEscape_convertsToTime() {
+        String sql = "SELECT * FROM t WHERE opened = {t '09:30:00'}";
+        String result = SqlParserLogic.parse(sql);
+        assertNotNull(result);
+        assertTrue(result.contains("TIME '09:30:00'"));
+        assertFalse(result.contains("{t "));
+    }
+
+    @Test
+    void parse_multipleEscapes_convertsAll() {
+        String sql = "SELECT * FROM t WHERE d = {d '2024-01-01'} AND ts = {ts '2024-01-01 12:00:00'}";
+        String result = SqlParserLogic.parse(sql);
+        assertNotNull(result);
+        assertTrue(result.contains("DATE '2024-01-01'"));
+        assertTrue(result.contains("TIMESTAMP '2024-01-01 12:00:00'"));
+    }
+
+    @Test
+    void preprocessOdbcEscapes_ts_d_t_fn_oj() {
+        String withTs = "x {ts '2024-01-01 00:00:00'} y";
+        assertTrue(SqlParserLogic.preprocessOdbcEscapes(withTs).contains("TIMESTAMP '2024-01-01 00:00:00'"));
+        String withD = "x {d '2024-01-01'} y";
+        assertTrue(SqlParserLogic.preprocessOdbcEscapes(withD).contains("DATE '2024-01-01'"));
+        String withFn = "SELECT {fn UCASE(name)} FROM t";
+        assertTrue(SqlParserLogic.preprocessOdbcEscapes(withFn).contains("UCASE"));
+        assertFalse(SqlParserLogic.preprocessOdbcEscapes(withFn).contains("{fn "));
+    }
+
+    @Test
+    void parse_emptyString_returnsEmpty() {
+        assertEquals("", SqlParserLogic.parse(""));
+    }
+
+    @Test
+    void parse_invalidSql_returnsFallback() {
+        String invalid = "SELECT * FROM (";
+        String result = SqlParserLogic.parse(invalid);
+        assertNotNull(result);
+        assertTrue(result.contains("SELECT") || result.equals(invalid));
+    }
 }
