@@ -6,6 +6,7 @@ import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.util.logging.Level;
 
 /**
  * Creates JDBC proxy wrappers for Connection and Statement to intercept
@@ -61,8 +62,15 @@ public final class MyTrinoConnectionProxy {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (PREPARE_STATEMENT.equals(method.getName()) && args != null && args.length >= 1 && args[0] instanceof String sql) {
+                if (DriverLogging.getLogger().isLoggable(Level.FINE)) {
+                    DriverLogging.getLogger().fine("prepareStatement(original): " + truncate(sql));
+                }
                 args = args.clone();
-                args[0] = SqlParserLogic.parse(sql);
+                String parsed = SqlParserLogic.parse(sql);
+                args[0] = parsed;
+                if (DriverLogging.getLogger().isLoggable(Level.FINE) && !parsed.equals(sql)) {
+                    DriverLogging.getLogger().fine("prepareStatement(parsed): " + truncate(parsed));
+                }
             }
             Object result = method.invoke(delegate, args);
             if (result instanceof Statement stmt) {
@@ -84,10 +92,22 @@ public final class MyTrinoConnectionProxy {
             String methodName = method.getName();
             if ((EXECUTE.equals(methodName) || EXECUTE_QUERY.equals(methodName) || EXECUTE_UPDATE.equals(methodName))
                     && args != null && args.length >= 1 && args[0] instanceof String sql) {
+                if (DriverLogging.getLogger().isLoggable(Level.FINE)) {
+                    DriverLogging.getLogger().fine(methodName + "(original): " + truncate(sql));
+                }
                 args = args.clone();
-                args[0] = SqlParserLogic.parse(sql);
+                String parsed = SqlParserLogic.parse(sql);
+                args[0] = parsed;
+                if (DriverLogging.getLogger().isLoggable(Level.FINE) && !parsed.equals(sql)) {
+                    DriverLogging.getLogger().fine(methodName + "(parsed): " + truncate(parsed));
+                }
             }
             return method.invoke(delegate, args);
         }
+    }
+
+    private static String truncate(String sql) {
+        if (sql == null) return "null";
+        return sql.length() > 200 ? sql.substring(0, 200) + "..." : sql;
     }
 }

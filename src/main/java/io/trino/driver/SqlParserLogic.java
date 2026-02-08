@@ -4,6 +4,7 @@ import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,13 +32,23 @@ public final class SqlParserLogic {
         if (sql == null) {
             return null;
         }
+        if (DriverLogging.getLogger().isLoggable(Level.FINER)) {
+            DriverLogging.getLogger().finer("parse(original): " + truncate(sql));
+        }
         try {
             String preprocessed = preprocessOdbcEscapes(sql);
             Statement statement = CCJSqlParserUtil.parse(preprocessed);
             if (statement != null) {
-                return statement.toString();
+                String result = statement.toString();
+                if (DriverLogging.getLogger().isLoggable(Level.FINER)) {
+                    DriverLogging.getLogger().finer("parse(result): " + truncate(result));
+                }
+                return result;
             }
         } catch (JSQLParserException e) {
+            if (DriverLogging.getLogger().isLoggable(Level.FINER)) {
+                DriverLogging.getLogger().finer("parse failed: " + e.getMessage() + ", using fallback");
+            }
             // If parsing fails after pre-processing, return pre-processed SQL
             try {
                 return preprocessOdbcEscapes(sql);
@@ -46,6 +57,11 @@ public final class SqlParserLogic {
             }
         }
         return sql;
+    }
+
+    private static String truncate(String s) {
+        if (s == null) return "null";
+        return s.length() > 120 ? s.substring(0, 120) + "..." : s;
     }
 
     /**
