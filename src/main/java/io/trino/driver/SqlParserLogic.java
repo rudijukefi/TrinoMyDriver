@@ -92,6 +92,10 @@ public final class SqlParserLogic {
     /**
      * Unwraps ODBC escape {keyword ...} by finding the matching closing brace.
      */
+    /**
+     * Unwraps ODBC escape {keyword ...} by finding the matching closing brace.
+     * Recursively unwraps matching nested escapes of the same type.
+     */
     private static String unwrapOdbcEscape(String sql, String keyword) {
         String patternStr = "\\{" + keyword + "\\s+";
         Pattern startPattern = Pattern.compile(patternStr, Pattern.CASE_INSENSITIVE);
@@ -99,13 +103,14 @@ public final class SqlParserLogic {
         Matcher matcher = startPattern.matcher(sql);
         int lastEnd = 0;
 
-        while (matcher.find()) {
+        while (matcher.find(lastEnd)) {
             result.append(sql, lastEnd, matcher.start());
             int contentStart = matcher.end();
             int braceDepth = 1;
             int i = contentStart - 1;
             while (i < sql.length()) {
                 i++;
+                if (i >= sql.length()) break; // Safety break
                 char c = sql.charAt(i);
                 if (c == '{') {
                     braceDepth++;
@@ -113,15 +118,24 @@ public final class SqlParserLogic {
                     braceDepth--;
                     if (braceDepth == 0) {
                         String content = sql.substring(contentStart, i).trim();
-                        result.append(content);
+                        // Recursive call to handle nested escapes of the same type (e.g. {fn ... {fn ...}})
+                        result.append(unwrapOdbcEscape(content, keyword));
                         lastEnd = i + 1;
                         break;
                     }
                 }
             }
             if (braceDepth != 0) {
-                result.append(sql, matcher.start(), Math.min(i + 1, sql.length()));
-                lastEnd = Math.min(i + 1, sql.length());
+                // Mismatched braces or end of string reached without closing brace
+                // Just append the rest and stop
+                // We reset lastEnd to start of match to preserve original text?
+                // Or just assume it's malformed and append?
+                // Current logic mimics original: append partial? 
+                // Original logic: result.append(sql, matcher.start(), Math.min(i + 1, sql.length()));
+                // Let's stick to appending safely.
+                result.append(sql.substring(matcher.start()));
+                lastEnd = sql.length(); 
+                break;
             }
         }
         result.append(sql.substring(lastEnd));

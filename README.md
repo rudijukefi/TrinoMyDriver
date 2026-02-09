@@ -44,7 +44,23 @@ mvn test -Pe2e -Dtrino.e2e.host=localhost
 # Or set TRINO_E2E_HOST / TRINO_E2E_PORT
 ```
 
+
 E2E tests connect with `jdbc:mytrino://...` and run queries against `mysql.demo_db.users`.
+
+### Using the Script
+
+A convenient script is provided to automatically build the driver and run the E2E tests:
+
+```cmd
+.\run_e2e_tests.cmd
+```
+
+This script will:
+1. Bootstrap Maven if necessary.
+2. Build the project (`mvn clean package -DskipTests`).
+3. Run the `TrinoE2ERunner` to execute tests against `localhost:8080`.
+
+Ensure you have Trino running (e.g. via Docker) before running the script.
 
 ## Docker
 

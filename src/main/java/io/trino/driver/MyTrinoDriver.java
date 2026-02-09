@@ -20,6 +20,14 @@ public class MyTrinoDriver extends TrinoDriver {
     public static final String URL_PREFIX = "jdbc:mytrino:";
     private static final String TRINO_URL_PREFIX = "jdbc:trino:";
 
+    static {
+        try {
+            java.sql.DriverManager.registerDriver(new MyTrinoDriver());
+        } catch (SQLException e) {
+            throw new RuntimeException("Can't register driver", e);
+        }
+    }
+
     @Override
     public boolean acceptsURL(String url) throws SQLException {
         // Accept both our prefix and Trino's so that when super.connect(trinoUrl, info)
