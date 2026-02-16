@@ -81,7 +81,7 @@ function Find-JavaHome {
         "${env:LOCALAPPDATA}\Programs\Eclipse Adoptium\jdk*",
         "${env:LOCALAPPDATA}\Programs\Microsoft\jdk*"
     )
-    $minVersion = 17
+    $minVersion = 8
     foreach ($pattern in $searchPaths) {
         $dirs = Get-Item $pattern -ErrorAction SilentlyContinue | Sort-Object { $_.Name } -Descending
         foreach ($d in $dirs) {
@@ -101,8 +101,8 @@ if ($javaHome) {
     $env:JAVA_HOME = $javaHome
     $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 } else {
-    Write-Host "Java not found. Install JDK 17+ and set JAVA_HOME or add java to PATH." -ForegroundColor Red
-    Write-Host "Or install with: winget install Microsoft.OpenJDK.17" -ForegroundColor Yellow
+    Write-Host "Java not found. Install JDK 8+ and set JAVA_HOME or add java to PATH." -ForegroundColor Red
+    Write-Host "Or install with: winget install Microsoft.OpenJDK.8" -ForegroundColor Yellow
     exit 1
 }
 

@@ -71,7 +71,7 @@ function Find-JavaHome {
         "${env:LOCALAPPDATA}\Programs\Eclipse Adoptium\jdk*",
         "${env:LOCALAPPDATA}\Programs\Microsoft\jdk*"
     )
-    $minVersion = 17
+    $minVersion = 8
     
     # Relax error action for version check as java -version writes to stderr
     $oldEAP = $ErrorActionPreference
@@ -109,7 +109,7 @@ if ($javaHome) {
         $env:Path = "$javaHome\bin;$env:Path"
     }
 } else {
-    Write-Host "Java not found or JAVA_HOME not set. Install JDK 17+." -ForegroundColor Red
+    Write-Host "Java not found or JAVA_HOME not set. Install JDK 8+." -ForegroundColor Red
     exit 1
 }
 
